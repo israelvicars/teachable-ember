@@ -9,5 +9,9 @@ module.exports = {
     browser: true
   },
   rules: {
+  },
+  globals: {
+    deeplearn: true,
+    knn_image_classifier: true
   }
 };
