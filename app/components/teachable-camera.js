@@ -4,69 +4,53 @@ import Component from '@ember/component';
 const { KNNImageClassifier } = knn_image_classifier;
 const { Array3D, ENV } = deeplearn;
 
-// Number of classes to classify
-const NUM_CLASSES = 3;
-// Webcam Image size. Must be 227.
 const IMAGE_SIZE = 227;
-// K value for KNN
 const TOPK = 10;
 
-
 class Main {
-  constructor(){
-    // Initiate variables
+  constructor(NUM_CLASSES = 3){
+    this.numClasses = NUM_CLASSES;
     this.infoTexts = [];
-    this.training = -1; // -1 when no class is being trained
+    this.training = -1;
     this.videoPlaying = false;
 
-    // Initiate deeplearn.js math and knn classifier objects
     this.knn = new KNNImageClassifier(NUM_CLASSES, TOPK, ENV.math);
-
-    // Create video element that will contain the webcam image
-    this.video = document.createElement('video');
-    this.video.setAttribute('autoplay', '');
-    this.video.setAttribute('playsinline', '');
-
-    // Add video element to DOM
-    document.body.appendChild(this.video);
+    this.video = document.getElementById('tvid');
 
     // Create training buttons and info texts
     for(let i=0;i<NUM_CLASSES; i++){
-      const div = document.createElement('div');
-      document.body.appendChild(div);
-      div.style.marginBottom = '10px';
+      //const div = document.createElement('div');
+      //document.body.appendChild(div);
+      //div.style.marginBottom = '10px';
 
-      // Create training button
-      const button = document.createElement('button')
-      button.innerText = "Train "+i;
-      div.appendChild(button);
+      //// Create training button
+      //const button = document.createElement('button')
+      //button.innerText = "Train "+i;
+      //div.appendChild(button);
 
-      // Listen for mouse events when clicking the button
-      button.addEventListener('mousedown', () => this.training = i);
-      button.addEventListener('mouseup', () => this.training = -1);
+      //// Listen for mouse events when clicking the button
+      //button.addEventListener('mousedown', () => this.training = i);
+      //button.addEventListener('mouseup', () => this.training = -1);
 
       // Create info text
       const infoText = document.createElement('span')
       infoText.innerText = " No examples added";
-      div.appendChild(infoText);
+      document.body.appendChild(infoText);
       this.infoTexts.push(infoText);
     }
 
-
-    // Setup webcam
     navigator.mediaDevices.getUserMedia({video: true, audio: false})
-    .then((stream) => {
-      this.video.srcObject = stream;
-      this.video.width = IMAGE_SIZE;
-      this.video.height = IMAGE_SIZE;
+      .then((stream) => {
+        this.video.srcObject = stream;
+        this.video.width = IMAGE_SIZE;
+        this.video.height = IMAGE_SIZE;
 
-      this.video.addEventListener('playing', ()=> this.videoPlaying = true);
-      this.video.addEventListener('paused', ()=> this.videoPlaying = false);
-    })
+        this.video.addEventListener('playing', ()=> this.videoPlaying = true);
+        this.video.addEventListener('paused', ()=> this.videoPlaying = false);
+      })
 
-    // Load knn model
     this.knn.load()
-    .then(() => this.start());
+      .then(() => this.start());
   }
 
   start(){
@@ -98,7 +82,7 @@ class Main {
       if(Math.max(...exampleCount) > 0){
         this.knn.predictClass(image)
         .then((res)=>{
-          for(let i=0;i<NUM_CLASSES; i++){
+          for(let i=0; i<this.numClasses; i++){
             // Make the predicted class bold
             if(res.classIndex == i){
               this.infoTexts[i].style.fontWeight = 'bold';
@@ -122,12 +106,24 @@ class Main {
   }
 }
 
-window.addEventListener('load', () => new Main());
-
 export default Component.extend({
-  init() {
+  classes: [
+    { label: 'Class 0', status: 'No examples added' },
+    { label: 'Class 1', status: 'No examples added' }
+  ],
+
+  didInsertElement() {
     this._super(...arguments);
 
-    console.log('init');
+    this.knn = new Main(this.get('classes.length'));
+  },
+
+  actions: {
+    startTraining(index) {
+      this.set('knn.training', index);
+    },
+    stopTraining() {
+      this.set('knn.training', -1);
+    },
   }
 });

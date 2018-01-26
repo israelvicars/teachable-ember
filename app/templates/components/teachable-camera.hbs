@@ -1,1 +1,11 @@
-{{yield}}
+<video id="tvid" autoplay playsinline></video>
+
+{{#each classes as |class index|}}
+  <div>
+    <button {{action 'startTraining' index on='mouseDown'}} {{action 'stopTraining' on='mouseUp'}}>
+      Train {{class.label}}
+    </button>
+    <span>{{class.status}}</span>
+  </div>
+{{/each}}
+
